@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Fixed: the published image shipped paho-mqtt 1.6, so MQTT failed and the app fell back to basic REST sensors.
+
 ## 1.1.0
 
 - Published as a GitHub app repository with pre-built images for amd64 and aarch64.

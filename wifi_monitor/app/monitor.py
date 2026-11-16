@@ -47,7 +47,7 @@ def _supervisor_token() -> str:
 
 SUPERVISOR_TOKEN = _supervisor_token()
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 DISCOVERY_PREFIX = "homeassistant"
 BASE_TOPIC = "wifi_monitor"
 AVAIL_TOPIC = f"{BASE_TOPIC}/status"
@@ -243,7 +243,10 @@ class HomeAssistant:
 class Mqtt:
     def __init__(self, cfg: dict, on_command):
         import paho.mqtt.client as mqtt  # imported lazily so logic can be tested without paho
-        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="wifi_monitor")
+        if hasattr(mqtt, "CallbackAPIVersion"):
+            self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="wifi_monitor")
+        else:  # paho-mqtt 1.x
+            self.client = mqtt.Client(client_id="wifi_monitor")
         if cfg.get("username"):
             self.client.username_pw_set(cfg["username"], cfg.get("password"))
         if cfg.get("ssl"):
@@ -842,7 +845,7 @@ def main() -> int:
             mqtt = Mqtt(cfg, lambda k, p: monitor_ref["m"].handle_command(k, p))
             mqtt.connected.wait(10)
         except Exception as err:  # noqa: BLE001
-            log.error("MQTT setup failed (%s) – falling back to REST sensors", err)
+            log.error("MQTT setup failed (%r) – falling back to REST sensors", err)
             mqtt = None
     else:
         log.warning("No MQTT broker found – using basic REST sensors (install Mosquitto for full features)")

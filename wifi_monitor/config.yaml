@@ -1,5 +1,5 @@
 name: Wi-Fi Signal Monitor
-version: "1.1.0"
+version: "1.1.1"
 slug: wifi_monitor
 description: Watches the signal strength of every Wi-Fi client on your UniFi network and warns about bad connections
 url: https://github.com/Sanfeld/home-assistant-apps/tree/main/wifi_monitor

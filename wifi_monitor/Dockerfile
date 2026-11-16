@@ -2,10 +2,11 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/base:3.23
 FROM ${BUILD_FROM}
 
-# Python + paho-mqtt from Alpine; UniFi and Supervisor calls only use the standard library.
-RUN apk add --no-cache python3 py3-paho-mqtt \
-    || (apk add --no-cache python3 py3-pip \
-        && pip3 install --no-cache-dir --break-system-packages "paho-mqtt>=2.0,<3")
+# Python from Alpine, paho-mqtt 2.x from PyPI (Alpine only ships 1.6).
+# UniFi and Supervisor calls only use the standard library.
+RUN apk add --no-cache python3 py3-pip \
+    && pip3 install --no-cache-dir --break-system-packages "paho-mqtt>=2.0,<3" \
+    && python3 -c "import paho.mqtt.client as m; m.CallbackAPIVersion"
 
 COPY app /app
 
