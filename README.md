@@ -24,7 +24,7 @@ connections. It comes with a ready-made [dashboard](./dashboards/wifi_monitor.ya
 
 [![Import the phone alerts blueprint.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FSanfeld%2Fhome-assistant-apps%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fwifi_monitor_phone_alerts.yaml)
 
-<!-- Add a dashboard screenshot here, e.g. ![Dashboard](./images/dashboard.png) -->
+![Wi-Fi dashboard](./images/dashboard.jpg)
 
 ## About
 

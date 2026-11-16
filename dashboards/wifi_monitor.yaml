@@ -99,10 +99,10 @@ views:
               columns: full
             content: |-
               {%- set aps = state_attr('sensor.wifi_monitor_wifi_clients', 'access_points') or [] -%}
-              | Access point | Clients | Avg | Weak | Bands |
+              | Access point | Clients | Avg dBm | Weak | Bands (GHz) |
               |:--|--:|--:|--:|:--|
               {%- for a in aps | sort(attribute='ap') %}
-              | {{ a.ap }} | {{ a.clients }} | {{ a.avg_signal }} dBm | {{ '⚠️ ' ~ a.weak if a.weak else '–' }} | {% for b, n in a.bands.items() %}{{ b }}: {{ n }}{{ ', ' if not loop.last }}{% endfor %} |
+              | {{ a.ap }} | {{ a.clients }} | {{ a.avg_signal }} | {{ '⚠️ ' ~ a.weak if a.weak else '–' }} | {% for b, n in a.bands.items() | sort %}{{ b | replace(' GHz', '') }}&nbsp;×{{ n }}{{ ' · ' if not loop.last }}{% endfor %} |
               {%- endfor %}
 
       # ------------------------------------------------------------ trends
@@ -127,10 +127,6 @@ views:
             entities:
               - entity: sensor.wifi_monitor_bad_connections
                 name: Bad connections
-          - type: logbook
-            hours_to_show: 48
-            target:
-              entity_id: binary_sensor.wifi_monitor_problem
 
       # ------------------------------------------------------------ all clients
       - type: grid
