@@ -41,6 +41,13 @@ around with a phone doesn't set off alerts.
 The thresholds are also number entities, so you can tune them from a dashboard without
 restarting the app.
 
+## Console hiccups
+
+UniFi consoles occasionally return errors for a minute or two (Network restarts, backups,
+updates). These are only logged. `binary_sensor.wifi_monitor_unifi_console` turns off, and the
+dashboard shows a warning, only after the console has kept failing for
+`console_offline_after_minutes` (default 5).
+
 ## Ignoring clients
 
 Phones, tablets and guests move around and drop off all the time, so you'll usually want to

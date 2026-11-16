@@ -47,7 +47,7 @@ def _supervisor_token() -> str:
 
 SUPERVISOR_TOKEN = _supervisor_token()
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 DISCOVERY_PREFIX = "homeassistant"
 BASE_TOPIC = "wifi_monitor"
 AVAIL_TOPIC = f"{BASE_TOPIC}/status"
@@ -312,6 +312,8 @@ class Monitor:
         self.select_options = None                        # last published select options
         self.announced: set = set()                       # macs with discovery published this run
         self.last_error = None
+        self.fail_since = None              # monotonic time of the first failed poll in a row
+        self.console_reported_down = False
         self.last_summary = None
         self.notification_text = None
         if mqtt:
@@ -408,14 +410,26 @@ class Monitor:
             stations = self.unifi.get("stat/sta")
             devices = self.unifi.get("stat/device")
         except UniFiError as err:
+            now_m = time.monotonic()
+            if self.fail_since is None:
+                self.fail_since = now_m
+            grace = int(self.opts.get("console_offline_after_minutes", 5)) * 60
+            down_for = now_m - self.fail_since
             if str(err) != self.last_error:
-                log.error("%s", err)
+                log.warning("%s", err) if down_for < grace else log.error("%s", err)
             self.last_error = str(err)
-            self.publish_console_status(False, str(err))
+            if down_for >= grace:
+                if not self.console_reported_down:
+                    log.error("UniFi console unreachable for %d min – reporting it as offline", down_for // 60)
+                self.console_reported_down = True
+                self.publish_console_status(False, str(err))
             return
         if self.last_error:
-            log.info("UniFi console reachable again")
+            down_for = time.monotonic() - (self.fail_since or time.monotonic())
+            log.info("UniFi console reachable again after %d s", down_for)
         self.last_error = None
+        self.fail_since = None
+        self.console_reported_down = False
         self.publish_console_status(True, None)
 
         ap_names = {d.get("mac", "").lower(): d.get("name") or d.get("model") or d.get("mac")
@@ -873,7 +887,7 @@ def main() -> int:
             monitor.poll()
         except Exception:  # noqa: BLE001 – never let one bad poll kill the app
             log.exception("Unexpected error during poll")
-        wait = interval if not monitor.last_error else min(interval * 2, 300)
+        wait = min(interval * 2, 300) if monitor.console_reported_down else interval
         STOP.wait(max(1, wait - (time.monotonic() - started)))
 
     if mqtt:

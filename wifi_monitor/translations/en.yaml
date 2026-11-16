@@ -38,6 +38,9 @@ configuration:
   good_polls_before_clear:
     name: Good polls before clear
     description: Consecutive good readings needed before a warning clears.
+  console_offline_after_minutes:
+    name: Console offline after (minutes)
+    description: How long the UniFi console must keep failing before it's reported as unreachable. Short hiccups (restarts, backups) are only logged. 0 reports every failure straight away.
   ignore_clients:
     name: Ignore clients
     description: MAC addresses or names (wildcards allowed, e.g. "Guest*") that should never raise warnings.

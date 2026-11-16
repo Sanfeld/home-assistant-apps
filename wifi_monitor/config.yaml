@@ -1,5 +1,5 @@
 name: Wi-Fi Signal Monitor
-version: "1.1.1"
+version: "1.1.2"
 slug: wifi_monitor
 description: Watches the signal strength of every Wi-Fi client on your UniFi network and warns about bad connections
 url: https://github.com/Sanfeld/home-assistant-apps/tree/main/wifi_monitor
@@ -27,6 +27,7 @@ options:
   min_satisfaction: 50
   bad_polls_before_alert: 3
   good_polls_before_clear: 3
+  console_offline_after_minutes: 5
   ignore_clients: []
   per_client_sensors: true
   persistent_notification: true
@@ -49,6 +50,7 @@ schema:
   min_satisfaction: int(0,100)
   bad_polls_before_alert: int(1,30)
   good_polls_before_clear: int(1,30)
+  console_offline_after_minutes: int(0,60)
   ignore_clients:
     - str
   per_client_sensors: bool

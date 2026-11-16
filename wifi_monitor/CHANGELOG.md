@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- Short UniFi console hiccups no longer raise a warning: the console is only reported unreachable after `console_offline_after_minutes` (default 5) of continuous failures.
+- Retries at the normal poll interval during a hiccup, so data comes back sooner.
+
 ## 1.1.1
 
 - Fixed: the published image shipped paho-mqtt 1.6, so MQTT failed and the app fell back to basic REST sensors.
