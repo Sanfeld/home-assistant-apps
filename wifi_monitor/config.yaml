@@ -1,0 +1,63 @@
+name: Wi-Fi Signal Monitor
+version: "1.1.0"
+slug: wifi_monitor
+description: Watches the signal strength of every Wi-Fi client on your UniFi network and warns about bad connections
+url: https://github.com/Sanfeld/home-assistant-apps/tree/main/wifi_monitor
+arch:
+  - aarch64
+  - amd64
+init: false
+startup: application
+boot: auto
+homeassistant_api: true
+services:
+  - mqtt:want
+map:
+  - type: share
+    read_only: false
+options:
+  unifi_host: 192.168.1.1
+  unifi_port: 443
+  api_key: ""
+  username: ""
+  password: ""
+  site: default
+  verify_ssl: false
+  poll_interval_seconds: 60
+  warn_dbm: -70
+  critical_dbm: -80
+  min_satisfaction: 50
+  bad_polls_before_alert: 3
+  good_polls_before_clear: 3
+  ignore_clients: []
+  per_client_sensors: true
+  persistent_notification: true
+  mqtt_host: ""
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  log_level: info
+schema:
+  unifi_host: str
+  unifi_port: port
+  api_key: password?
+  username: str?
+  password: password?
+  site: str
+  verify_ssl: bool
+  poll_interval_seconds: int(15,900)
+  warn_dbm: int(-95,-40)
+  critical_dbm: int(-100,-45)
+  min_satisfaction: int(0,100)
+  bad_polls_before_alert: int(1,30)
+  good_polls_before_clear: int(1,30)
+  ignore_clients:
+    - str
+  per_client_sensors: bool
+  persistent_notification: bool
+  mqtt_host: str?
+  mqtt_port: port?
+  mqtt_username: str?
+  mqtt_password: password?
+  log_level: list(debug|info|warning|error)
+image: ghcr.io/sanfeld/wifi-monitor

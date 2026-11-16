@@ -1,0 +1,64 @@
+configuration:
+  unifi_host:
+    name: UniFi console address
+    description: IP or hostname of your UCG Max / UniFi OS console (no https://).
+  unifi_port:
+    name: UniFi console port
+    description: Normally 443.
+  api_key:
+    name: UniFi API key (recommended)
+    description: Create one on the console under UniFi Network → Settings → Control Plane → Integrations. Leave empty to log in with username and password instead.
+  username:
+    name: UniFi username
+    description: Only used when no API key is set. Use a local, read-only admin account.
+  password:
+    name: UniFi password
+    description: Only used when no API key is set.
+  site:
+    name: Site
+    description: UniFi site short name. Almost always "default".
+  verify_ssl:
+    name: Verify TLS certificate
+    description: Leave off unless your console has a trusted certificate.
+  poll_interval_seconds:
+    name: Poll interval (seconds)
+    description: How often client signal data is read from the console.
+  warn_dbm:
+    name: Warning threshold (dBm)
+    description: Clients weaker than this are flagged as "weak". -70 dBm is a common limit for reliable Wi-Fi.
+  critical_dbm:
+    name: Critical threshold (dBm)
+    description: Clients weaker than this are flagged as "critical". Must be lower than the warning threshold.
+  min_satisfaction:
+    name: Minimum UniFi experience (%)
+    description: Clients whose UniFi Wi-Fi experience score drops below this are flagged even with OK signal. 0 disables this check.
+  bad_polls_before_alert:
+    name: Bad polls before alert
+    description: Consecutive bad readings needed before a client is reported. Filters out short dips while someone walks around.
+  good_polls_before_clear:
+    name: Good polls before clear
+    description: Consecutive good readings needed before a warning clears.
+  ignore_clients:
+    name: Ignore clients
+    description: MAC addresses or names (wildcards allowed, e.g. "Guest*") that should never raise warnings.
+  per_client_sensors:
+    name: One sensor per client
+    description: Create a signal-strength sensor for every Wi-Fi client (via MQTT).
+  persistent_notification:
+    name: Home Assistant notification
+    description: Keep a persistent notification in Home Assistant listing current bad connections.
+  mqtt_host:
+    name: MQTT broker (optional)
+    description: Leave empty to use the Mosquitto app automatically. Set it (e.g. core-mosquitto) only if the automatic lookup fails.
+  mqtt_port:
+    name: MQTT port
+    description: Normally 1883.
+  mqtt_username:
+    name: MQTT username
+    description: Only needed with a manual MQTT broker.
+  mqtt_password:
+    name: MQTT password
+    description: Only needed with a manual MQTT broker.
+  log_level:
+    name: Log level
+    description: How much detail to write to the app log.

@@ -1,0 +1,194 @@
+# Wi-Fi Signal Monitor dashboard
+# Settings → Dashboards → Add dashboard → "New dashboard from scratch" (title: Wi-Fi, URL: dashboard-wifi),
+# open it → ⋮ → Edit dashboard → ⋮ → Raw configuration editor → paste this whole file → Save.
+# Uses only built-in cards, so it follows whatever theme you use.
+title: Wi-Fi
+views:
+  - title: Wi-Fi health
+    path: wifi
+    icon: mdi:wifi-check
+    type: sections
+    max_columns: 3
+    sections:
+      # ------------------------------------------------------------ warnings
+      - type: grid
+        column_span: 3
+        cards:
+          - type: heading
+            heading: Connection warnings
+            icon: mdi:wifi-alert
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {%- set alerts = state_attr('sensor.wifi_monitor_bad_connections', 'alerts') or [] -%}
+              {%- set th = state_attr('sensor.wifi_monitor_bad_connections', 'thresholds') or {} -%}
+              {%- if is_state('binary_sensor.wifi_monitor_unifi_console', 'off') -%}
+              <ha-alert alert-type="error" title="Can't reach the UniFi console">
+              {{ state_attr('binary_sensor.wifi_monitor_unifi_console', 'error') or 'Check the Wi-Fi Signal Monitor app log.' }}
+              </ha-alert>
+              {%- elif states('sensor.wifi_monitor_bad_connections') in ['unknown', 'unavailable'] -%}
+              <ha-alert alert-type="info">Waiting for the Wi-Fi Signal Monitor app…</ha-alert>
+              {%- elif alerts | count == 0 -%}
+              <ha-alert alert-type="success" title="All Wi-Fi connections look healthy">
+              {{ states('sensor.wifi_monitor_wifi_clients') }} clients connected · weakest
+              {{ states('sensor.wifi_monitor_worst_signal') }} dBm
+              ({{ state_attr('sensor.wifi_monitor_worst_signal', 'client') }})
+              </ha-alert>
+              {%- else -%}
+              {%- for a in alerts %}
+              {%- set kind = 'error' if a.level == 'critical' else 'warning' %}
+              {%- set label = {'critical': 'Critical signal', 'weak': 'Weak signal', 'poor': 'Poor Wi-Fi experience'}[a.level] %}
+              <ha-alert alert-type="{{ kind }}" title="{{ a.name }} — {{ label }}">
+              <b>{{ a.signal }} dBm</b>{% if a.worst_signal is not none and a.worst_signal != a.signal %} (worst {{ a.worst_signal }}){% endif %}
+              {%- if a.satisfaction is not none %} · experience {{ a.satisfaction }}%{% endif %}
+              · {{ a.ap }} · {{ a.band }} ch {{ a.channel }} · {{ a.ssid }}<br>
+              <small>Flagged {{ relative_time(as_datetime(a.since)) }} ago{% if a.current == 'ok' %} · improving{% endif %}</small>
+              </ha-alert>
+              {%- endfor %}
+              {%- endif %}
+
+              <small>Warning below {{ th.warn_dbm }} dBm · critical below {{ th.critical_dbm }} dBm
+              {%- if th.min_satisfaction %} · experience below {{ th.min_satisfaction }}%{% endif %}</small>
+
+      # ------------------------------------------------------------ key numbers
+      - type: grid
+        cards:
+          - type: heading
+            heading: Overview
+            icon: mdi:wifi
+          - type: tile
+            entity: sensor.wifi_monitor_bad_connections
+            name: Bad connections
+            color: red
+          - type: tile
+            entity: sensor.wifi_monitor_wifi_clients
+            name: Wi-Fi clients
+          - type: tile
+            entity: sensor.wifi_monitor_worst_signal
+            name: Worst signal
+            color: orange
+          - type: tile
+            entity: sensor.wifi_monitor_average_signal
+            name: Average signal
+            color: green
+          - type: tile
+            entity: sensor.wifi_monitor_critical
+            name: Critical
+            color: red
+          - type: tile
+            entity: sensor.wifi_monitor_weak
+            name: Weak
+            color: orange
+          - type: tile
+            entity: sensor.wifi_monitor_poor
+            name: Poor experience
+            color: amber
+          - type: tile
+            entity: binary_sensor.wifi_monitor_unifi_console
+            name: UniFi console
+
+      # ------------------------------------------------------------ per access point
+      - type: grid
+        cards:
+          - type: heading
+            heading: Access points
+            icon: mdi:access-point
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {%- set aps = state_attr('sensor.wifi_monitor_wifi_clients', 'access_points') or [] -%}
+              | Access point | Clients | Avg | Weak | Bands |
+              |:--|--:|--:|--:|:--|
+              {%- for a in aps | sort(attribute='ap') %}
+              | {{ a.ap }} | {{ a.clients }} | {{ a.avg_signal }} dBm | {{ '⚠️ ' ~ a.weak if a.weak else '–' }} | {% for b, n in a.bands.items() %}{{ b }}: {{ n }}{{ ', ' if not loop.last }}{% endfor %} |
+              {%- endfor %}
+
+      # ------------------------------------------------------------ trends
+      - type: grid
+        cards:
+          - type: heading
+            heading: Last 24 hours
+            icon: mdi:chart-line
+          - type: history-graph
+            hours_to_show: 24
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.wifi_monitor_worst_signal
+                name: Worst
+              - entity: sensor.wifi_monitor_average_signal
+                name: Average
+          - type: history-graph
+            hours_to_show: 24
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.wifi_monitor_bad_connections
+                name: Bad connections
+          - type: logbook
+            hours_to_show: 48
+            target:
+              entity_id: binary_sensor.wifi_monitor_problem
+
+      # ------------------------------------------------------------ all clients
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: All Wi-Fi clients (weakest first)
+            icon: mdi:devices
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {%- set clients = state_attr('sensor.wifi_monitor_wifi_clients', 'clients') or [] -%}
+              {%- set icon = {'critical': '🔴', 'weak': '🟠', 'poor': '🟡', 'ok': '🟢'} -%}
+              | | Client | Signal | Experience | Access point | Band |
+              |:-:|:--|--:|--:|:--|:--|
+              {%- for c in clients %}
+              | {{ '⚪' if c.ignored else icon[c.level] }} | {{ c.name }} | {{ c.signal }} dBm | {{ c.satisfaction ~ '%' if c.satisfaction is not none else '–' }} | {{ c.ap }} | {{ c.band }} |
+              {%- endfor %}
+
+      # ------------------------------------------------------------ ignored clients
+      - type: grid
+        cards:
+          - type: heading
+            heading: Ignored clients
+            icon: mdi:eye-off-outline
+          - type: entities
+            entities:
+              - entity: select.wifi_monitor_ignore_client
+                name: Ignore
+              - entity: select.wifi_monitor_unignore_client
+                name: Stop ignoring
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {%- set ign = state_attr('sensor.wifi_monitor_wifi_clients', 'ignored_clients') or [] -%}
+              {%- if ign | count == 0 -%}
+              No clients are ignored.
+              {%- else -%}
+              | Client | Signal | Ignored by |
+              |:--|--:|:--|
+              {%- for c in ign | sort(attribute='name') %}
+              | {{ c.name }} | {{ c.signal }} dBm | {{ 'app setting (' ~ 'pattern' ~ ')' if c.by == 'app setting' else 'dashboard' }} |
+              {%- endfor %}
+              {%- endif %}
+
+      # ------------------------------------------------------------ settings
+      - type: grid
+        cards:
+          - type: heading
+            heading: Thresholds
+            icon: mdi:tune
+          - type: entities
+            entities:
+              - entity: number.wifi_monitor_warn_dbm
+                name: Warn below
+              - entity: number.wifi_monitor_critical_dbm
+                name: Critical below
+              - entity: number.wifi_monitor_min_satisfaction
+                name: Min. experience

@@ -1,0 +1,82 @@
+blueprint:
+  name: Wi-Fi Signal Monitor – phone alerts
+  description: >-
+    Sends a push notification to your phone when the Wi-Fi Signal Monitor app flags a
+    device with a bad Wi-Fi connection, and removes the notification again when the
+    device recovers or disconnects.
+  domain: automation
+  source_url: https://github.com/Sanfeld/home-assistant-apps/blob/main/blueprints/automation/wifi_monitor_phone_alerts.yaml
+  input:
+    phone:
+      name: Phone
+      description: The phone (Home Assistant Companion app) that receives the alerts.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    levels:
+      name: Alert on
+      description: Which kinds of bad connection should send a notification.
+      default: [critical, weak, poor]
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Critical signal
+              value: critical
+            - label: Weak signal
+              value: weak
+            - label: Poor Wi-Fi experience
+              value: poor
+    dashboard_path:
+      name: Dashboard to open
+      description: Path opened when you tap the notification, e.g. /dashboard-wifi/wifi. Leave empty to open Home Assistant.
+      default: ""
+      selector:
+        text:
+
+mode: queued
+max: 20
+
+variables:
+  levels: !input levels
+  dashboard_path: !input dashboard_path
+  event: "{{ trigger.event.data }}"
+  icons:
+    critical: "🔴"
+    weak: "🟠"
+    poor: "🟡"
+
+triggers:
+  - trigger: event
+    event_type: wifi_monitor_alert
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ event.type in ['new', 'escalated'] and event.level in levels }}"
+        sequence:
+          - domain: mobile_app
+            type: notify
+            device_id: !input phone
+            title: "{{ icons.get(event.level, '⚠️') }} Wi-Fi {{ event.level }}: {{ event.name }}"
+            message: >-
+              {{ event.signal }} dBm on {{ event.ap }} ({{ event.band }}, ch {{ event.channel }})
+              {%- if event.satisfaction is not none %} · experience {{ event.satisfaction }}%{% endif %}
+            data:
+              tag: "wifi_{{ event.mac }}"
+              group: wifi_monitor
+              channel: Wi-Fi alerts
+              clickAction: "{{ dashboard_path if dashboard_path else '/' }}"
+              url: "{{ dashboard_path if dashboard_path else '/' }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ event.type in ['cleared', 'disconnected'] }}"
+        sequence:
+          - domain: mobile_app
+            type: notify
+            device_id: !input phone
+            message: clear_notification
+            data:
+              tag: "wifi_{{ event.mac }}"
