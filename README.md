@@ -26,6 +26,15 @@ connections. It comes with a ready-made [dashboard](./dashboards/wifi_monitor.ya
 
 ![Wi-Fi dashboard](./images/dashboard.jpg)
 
+## Also by me
+
+### [moOde Audio for Home Assistant](https://github.com/Sanfeld/ha-moode)
+
+A custom integration (installed from the Marketplace, not the App store) for
+[moOde audio](https://moodeaudio.org) players: multiroom zones with per-room Zone / Solo / Off
+control, a station manager with logos, backups and the radio-browser.info directory, amplifier
+control, and a dashboard that builds itself.
+
 ## About
 
 Built and tested on a home UniFi network (UCG Max with U7 Pro and AC Pro access points).
